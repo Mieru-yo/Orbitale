@@ -17,6 +17,8 @@ tags:
     description: Catalogue des événements
   - name: Billets
     description: Billets émis pour les commandes payées
+  - name: Commandes
+    description: Achat de billets
 
 paths:
   /v1/events:
@@ -183,6 +185,193 @@ paths:
                 status: valid
                 usedAt: null
         '404': { $ref: '#/components/responses/NotFound' }
+
+  /v1/orders:
+    get:
+      tags: [Commandes]
+      operationId: listOrders
+      summary: Lister les commandes
+      parameters:
+        - name: buyerEmail
+          in: query
+          required: false
+          schema: { type: string, format: email }
+      responses:
+        '200':
+          description: La liste des commandes
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OrderList' }
+              example:
+                data:
+                  - id: 9d2f6a1c-5b8e-4c3d-a7f0-1e2b3c4d5e6f
+                    eventId: 6f1c2b8e-4f3a-4e8b-9a51-2d7c0f9e1a23
+                    buyerEmail: lea.martin@example.com
+                    quantity: 2
+                    total: 7800
+                    currency: EUR
+                    status: paid
+                    createdAt: '2026-11-20T14:05:00.000Z'
+                    tickets:
+                      - id: 0b7e4d2a-91c3-4f6e-8a1d-3c5b7e9f2a14
+                        orderId: 9d2f6a1c-5b8e-4c3d-a7f0-1e2b3c4d5e6f
+                        eventId: 6f1c2b8e-4f3a-4e8b-9a51-2d7c0f9e1a23
+                        code: ORB-3FA9C21B7E04
+                        status: valid
+                        usedAt: null
+                      - id: 5c1a8e3f-7d2b-4a9c-b6e1-8f0d2c4a6b13
+                        orderId: 9d2f6a1c-5b8e-4c3d-a7f0-1e2b3c4d5e6f
+                        eventId: 6f1c2b8e-4f3a-4e8b-9a51-2d7c0f9e1a23
+                        code: ORB-8B21D04E6CA7
+                        status: valid
+                        usedAt: null
+        '400': { $ref: '#/components/responses/BadRequest' }
+    post:
+      tags: [Commandes]
+      operationId: createOrder
+      summary: Passer une commande
+      description: Répond 409 si l'événement n'a plus assez de places.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OrderCreate' }
+            example:
+              eventId: 6f1c2b8e-4f3a-4e8b-9a51-2d7c0f9e1a23
+              quantity: 2
+              buyerEmail: lea.martin@example.com
+      responses:
+        '201':
+          description: La commande créée
+          headers:
+            Location: { $ref: '#/components/headers/Location' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Order' }
+              example:
+                id: 9d2f6a1c-5b8e-4c3d-a7f0-1e2b3c4d5e6f
+                eventId: 6f1c2b8e-4f3a-4e8b-9a51-2d7c0f9e1a23
+                buyerEmail: lea.martin@example.com
+                quantity: 2
+                total: 7800
+                currency: EUR
+                status: paid
+                createdAt: '2026-11-20T14:05:00.000Z'
+                tickets:
+                  - id: 0b7e4d2a-91c3-4f6e-8a1d-3c5b7e9f2a14
+                    orderId: 9d2f6a1c-5b8e-4c3d-a7f0-1e2b3c4d5e6f
+                    eventId: 6f1c2b8e-4f3a-4e8b-9a51-2d7c0f9e1a23
+                    code: ORB-3FA9C21B7E04
+                    status: valid
+                    usedAt: null
+                  - id: 5c1a8e3f-7d2b-4a9c-b6e1-8f0d2c4a6b13
+                    orderId: 9d2f6a1c-5b8e-4c3d-a7f0-1e2b3c4d5e6f
+                    eventId: 6f1c2b8e-4f3a-4e8b-9a51-2d7c0f9e1a23
+                    code: ORB-8B21D04E6CA7
+                    status: valid
+                    usedAt: null
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/Validation' }
+
+  /v1/orders/{orderId}:
+    parameters:
+      - $ref: '#/components/parameters/OrderId'
+    get:
+      tags: [Commandes]
+      operationId: getOrder
+      summary: Lire une commande
+      responses:
+        '200':
+          description: La commande demandée
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Order' }
+              example:
+                id: 9d2f6a1c-5b8e-4c3d-a7f0-1e2b3c4d5e6f
+                eventId: 6f1c2b8e-4f3a-4e8b-9a51-2d7c0f9e1a23
+                buyerEmail: lea.martin@example.com
+                quantity: 2
+                total: 7800
+                currency: EUR
+                status: paid
+                createdAt: '2026-11-20T14:05:00.000Z'
+                tickets:
+                  - id: 0b7e4d2a-91c3-4f6e-8a1d-3c5b7e9f2a14
+                    orderId: 9d2f6a1c-5b8e-4c3d-a7f0-1e2b3c4d5e6f
+                    eventId: 6f1c2b8e-4f3a-4e8b-9a51-2d7c0f9e1a23
+                    code: ORB-3FA9C21B7E04
+                    status: valid
+                    usedAt: null
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [Commandes]
+      operationId: cancelOrder
+      summary: Annuler une commande
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OrderPatch' }
+            example:
+              status: cancelled
+      responses:
+        '200':
+          description: La commande annulée
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Order' }
+              example:
+                id: 9d2f6a1c-5b8e-4c3d-a7f0-1e2b3c4d5e6f
+                eventId: 6f1c2b8e-4f3a-4e8b-9a51-2d7c0f9e1a23
+                buyerEmail: lea.martin@example.com
+                quantity: 2
+                total: 7800
+                currency: EUR
+                status: cancelled
+                createdAt: '2026-11-20T14:05:00.000Z'
+                tickets:
+                  - id: 0b7e4d2a-91c3-4f6e-8a1d-3c5b7e9f2a14
+                    orderId: 9d2f6a1c-5b8e-4c3d-a7f0-1e2b3c4d5e6f
+                    eventId: 6f1c2b8e-4f3a-4e8b-9a51-2d7c0f9e1a23
+                    code: ORB-3FA9C21B7E04
+                    status: cancelled
+                    usedAt: null
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/Validation' }
+
+  /v1/orders/{orderId}/tickets:
+    parameters:
+      - $ref: '#/components/parameters/OrderId'
+    get:
+      tags: [Billets]
+      operationId: listOrderTickets
+      summary: Lister les billets d'une commande
+      responses:
+        '200':
+          description: Les billets de la commande
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TicketList' }
+              example:
+                data:
+                  - id: 0b7e4d2a-91c3-4f6e-8a1d-3c5b7e9f2a14
+                    orderId: 9d2f6a1c-5b8e-4c3d-a7f0-1e2b3c4d5e6f
+                    eventId: 6f1c2b8e-4f3a-4e8b-9a51-2d7c0f9e1a23
+                    code: ORB-3FA9C21B7E04
+                    status: valid
+                    usedAt: null
+                  - id: 5c1a8e3f-7d2b-4a9c-b6e1-8f0d2c4a6b13
+                    orderId: 9d2f6a1c-5b8e-4c3d-a7f0-1e2b3c4d5e6f
+                    eventId: 6f1c2b8e-4f3a-4e8b-9a51-2d7c0f9e1a23
+                    code: ORB-8B21D04E6CA7
+                    status: valid
+                    usedAt: null
+        '404': { $ref: '#/components/responses/NotFound' }
+
 components:
   parameters:
     EventId:
@@ -194,6 +383,11 @@ components:
 
     TicketId:
       name: ticketId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    OrderId:
+      name: orderId
       in: path
       required: true
       schema: { type: string, format: uuid }
@@ -339,3 +533,52 @@ components:
         code: { type: string, pattern: '^ORB-[0-9A-F]{12}$', readOnly: true }
         status: { type: string, enum: [valid, used, cancelled], readOnly: true }
         usedAt: { type: [string, 'null'], format: date-time, readOnly: true }
+
+    TicketList:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/Ticket' }
+
+    OrderCreate:
+      type: object
+      additionalProperties: false
+      required: [eventId, quantity, buyerEmail]
+      properties:
+        eventId: { type: string, format: uuid }
+        quantity: { type: integer, minimum: 1, maximum: 10 }
+        buyerEmail: { type: string, format: email, maxLength: 254 }
+
+    OrderPatch:
+      type: object
+      additionalProperties: false
+      required: [status]
+      properties:
+        status: { type: string, enum: [cancelled] }
+
+    Order:
+      type: object
+      required: [id, eventId, buyerEmail, quantity, total, currency, status, createdAt, tickets]
+      properties:
+        id: { type: string, format: uuid, readOnly: true }
+        eventId: { type: string, format: uuid }
+        buyerEmail: { type: string, format: email }
+        quantity: { type: integer, minimum: 1, maximum: 10 }
+        total: { type: integer, minimum: 0, readOnly: true, description: Total en centimes }
+        currency: { type: string, enum: [EUR], readOnly: true }
+        status: { type: string, enum: [pending, paid, cancelled] }
+        createdAt: { type: string, format: date-time, readOnly: true }
+        tickets:
+          type: array
+          readOnly: true
+          items: { $ref: '#/components/schemas/Ticket' }
+
+    OrderList:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/Order' }
