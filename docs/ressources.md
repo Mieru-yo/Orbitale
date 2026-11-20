@@ -1,6 +1,5 @@
 # Orbitale — modèle de ressources (livrable S1)
 
-Binôme :
 Date : 20 novembre 2026
 
 ## 1. Ressources métier
