@@ -39,4 +39,14 @@ rules:
       functionOptions:
         notMatch: '/\/(create|get|update|delete|add|remove|validate|cancel|list|fetch|search)/i'
 
+  orbitale-parametre-id:
+    description: Un paramètre de chemin se termine par Id (eventId, orderId)
+    severity: error
+    given: "$..parameters[?(@ && @.in == 'path')]"
+    then:
+      field: name
+      function: pattern
+      functionOptions:
+        match: 'Id$'
+
   operation-description: off
