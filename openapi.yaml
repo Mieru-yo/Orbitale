@@ -22,6 +22,11 @@ paths:
       tags: [Événements]
       operationId: listEvents
       summary: Lister les événements
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema: { type: string, enum: [draft, published, cancelled] }
       responses:
         '200':
           description: La liste des événements
@@ -42,6 +47,7 @@ paths:
                     status: published
                     createdAt: '2026-11-20T10:00:00.000Z'
                     updatedAt: '2026-11-20T10:00:00.000Z'
+        '400': { $ref: '#/components/responses/BadRequest' }
     post:
       tags: [Événements]
       operationId: createEvent
@@ -80,6 +86,8 @@ paths:
                 status: draft
                 createdAt: '2026-11-20T10:00:00.000Z'
                 updatedAt: '2026-11-20T10:00:00.000Z'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '422': { $ref: '#/components/responses/Validation' }
 
   /v1/events/{eventId}:
     parameters:
@@ -138,7 +146,9 @@ paths:
                 status: published
                 createdAt: '2026-11-20T10:00:00.000Z'
                 updatedAt: '2026-11-21T09:30:00.000Z'
+        '400': { $ref: '#/components/responses/BadRequest' }
         '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/Validation' }
     delete:
       tags: [Événements]
       operationId: deleteEvent
@@ -147,6 +157,7 @@ paths:
         '204':
           description: Événement supprimé
         '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
 
 components:
   parameters:
@@ -162,7 +173,45 @@ components:
       content:
         application/problem+json:
           schema: { $ref: '#/components/schemas/Problem' }
-    # TODO : BadRequest (400), Validation (422), Conflict (409)
+          example:
+            type: https://api.orbitale.test/problems/not-found
+            title: Ressource introuvable
+            status: 404
+            detail: Événement introuvable
+            instance: /v1/events/6f1c2b8e-4f3a-4e8b-9a51-2d7c0f9e1a23
+    BadRequest:
+      description: Requête mal formée
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+          example:
+            type: https://api.orbitale.test/problems/bad-request
+            title: Requête mal formée
+            status: 400
+            detail: Le corps n'est pas du JSON valide
+    Validation:
+      description: Données invalides
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ValidationProblem' }
+          example:
+            type: https://api.orbitale.test/problems/validation
+            title: Requête invalide
+            status: 422
+            detail: Le corps ne respecte pas le contrat
+            errors:
+              - field: capacity
+                message: Doit être >= 1
+    Conflict:
+      description: Conflit avec l'état de la ressource
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+          example:
+            type: https://api.orbitale.test/problems/conflict
+            title: Conflit
+            status: 409
+            detail: Des billets ont déjà été vendus pour cet événement
 
   headers:
     Location:
@@ -180,6 +229,21 @@ components:
         status: { type: integer, example: 404 }
         detail: { type: string, example: Événement introuvable }
         instance: { type: string, example: /v1/events/6f1c2b8e-4f3a-4e8b-9a51-2d7c0f9e1a23 }
+
+    ValidationProblem:
+      allOf:
+        - $ref: '#/components/schemas/Problem'
+        - type: object
+          required: [errors]
+          properties:
+            errors:
+              type: array
+              items:
+                type: object
+                required: [field, message]
+                properties:
+                  field: { type: string }
+                  message: { type: string }
 
     Event:
       type: object
