@@ -15,6 +15,8 @@ servers:
 tags:
   - name: Événements
     description: Catalogue des événements
+  - name: Billets
+    description: Billets émis pour les commandes payées
 
 paths:
   /v1/events:
@@ -159,6 +161,28 @@ paths:
         '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/Conflict' }
 
+
+  /v1/tickets/{ticketId}:
+    parameters:
+      - $ref: '#/components/parameters/TicketId'
+    get:
+      tags: [Billets]
+      operationId: getTicket
+      summary: Lire un billet
+      responses:
+        '200':
+          description: Le billet demandé
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Ticket' }
+              example:
+                id: 0b7e4d2a-91c3-4f6e-8a1d-3c5b7e9f2a14
+                orderId: 9d2f6a1c-5b8e-4c3d-a7f0-1e2b3c4d5e6f
+                eventId: 6f1c2b8e-4f3a-4e8b-9a51-2d7c0f9e1a23
+                code: ORB-3FA9C21B7E04
+                status: valid
+                usedAt: null
+        '404': { $ref: '#/components/responses/NotFound' }
 components:
   parameters:
     EventId:
@@ -167,6 +191,12 @@ components:
       required: true
       schema: { type: string, format: uuid }
 
+
+    TicketId:
+      name: ticketId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
   responses:
     NotFound:
       description: Ressource introuvable
@@ -297,3 +327,15 @@ components:
         price: { type: integer, minimum: 0, description: Prix en centimes }
         currency: { type: string, enum: [EUR] }
         status: { type: string, enum: [draft, published, cancelled] }
+
+
+    Ticket:
+      type: object
+      required: [id, orderId, eventId, code, status, usedAt]
+      properties:
+        id: { type: string, format: uuid, readOnly: true }
+        orderId: { type: string, format: uuid, readOnly: true }
+        eventId: { type: string, format: uuid, readOnly: true }
+        code: { type: string, pattern: '^ORB-[0-9A-F]{12}$', readOnly: true }
+        status: { type: string, enum: [valid, used, cancelled], readOnly: true }
+        usedAt: { type: [string, 'null'], format: date-time, readOnly: true }
