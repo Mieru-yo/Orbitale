@@ -1,0 +1,107 @@
+# Contrat de départ de l'API Orbitale (S2).
+# Un seul endpoint est écrit en entier : GET /v1/events/{eventId}. Sers-t'en de modèle.
+# À toi d'ajouter les autres opérations de ton tableau de S1, en réutilisant components.
+openapi: 3.1.0
+info:
+  title: API Orbitale
+  version: 1.0.0
+  summary: Billetterie d'événements
+  description: |
+    API REST de la plateforme Orbitale.
+    Les erreurs suivent la RFC 9457 (application/problem+json).
+  contact:
+    name: Équipe API Orbitale
+    email: api@orbitale.test
+servers:
+  - url: http://localhost:3000
+    description: Développement local
+tags:
+  - name: Événements
+    description: Catalogue des événements
+
+paths:
+  /v1/events/{eventId}:
+    parameters:
+      - $ref: '#/components/parameters/EventId'
+    get:
+      tags: [Événements]
+      operationId: getEvent
+      summary: Lire un événement
+      responses:
+        '200':
+          description: L'événement demandé
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Event' }
+              example:
+                id: 6f1c2b8e-4f3a-4e8b-9a51-2d7c0f9e1a23
+                title: Nuit électro
+                description: null
+                venue: Le Zénith, Paris
+                startsAt: '2027-03-19T20:00:00.000Z'
+                capacity: 6000
+                remaining: 5874
+                price: 3900
+                currency: EUR
+                status: published
+                createdAt: '2026-11-20T10:00:00.000Z'
+                updatedAt: '2026-11-20T10:00:00.000Z'
+        '404': { $ref: '#/components/responses/NotFound' }
+
+    # TODO : PATCH (modification partielle) et DELETE
+
+  # TODO : /v1/events (GET liste, POST création)
+  # TODO : /v1/orders, /v1/orders/{orderId}, /v1/orders/{orderId}/tickets, /v1/tickets/{ticketId}
+
+components:
+  parameters:
+    EventId:
+      name: eventId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+
+  responses:
+    NotFound:
+      description: Ressource introuvable
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    # TODO : BadRequest (400), Validation (422), Conflict (409)
+
+  headers:
+    Location:
+      description: URI de la ressource créée
+      schema: { type: string }
+
+  schemas:
+    Problem:
+      type: object
+      description: Erreur au format RFC 9457
+      required: [type, title, status]
+      properties:
+        type: { type: string, format: uri, example: 'https://api.orbitale.test/problems/not-found' }
+        title: { type: string, example: Ressource introuvable }
+        status: { type: integer, example: 404 }
+        detail: { type: string, example: Événement introuvable }
+        instance: { type: string, example: /v1/events/6f1c2b8e-4f3a-4e8b-9a51-2d7c0f9e1a23 }
+
+    Event:
+      type: object
+      required: [id, title, venue, startsAt, capacity, remaining, price, currency, status, createdAt, updatedAt]
+      properties:
+        id: { type: string, format: uuid, readOnly: true }
+        title: { type: string, minLength: 3, maxLength: 120 }
+        description: { type: [string, 'null'], maxLength: 2000 }
+        venue: { type: string, minLength: 2, maxLength: 120 }
+        startsAt: { type: string, format: date-time }
+        capacity: { type: integer, minimum: 1, maximum: 100000 }
+        remaining: { type: integer, readOnly: true, description: Places encore disponibles }
+        price: { type: integer, minimum: 0, description: Prix en centimes (3900 = 39,00 €) }
+        currency: { type: string, enum: [EUR] }
+        status: { type: string, enum: [draft, published, cancelled] }
+        createdAt: { type: string, format: date-time, readOnly: true }
+        updatedAt: { type: string, format: date-time, readOnly: true }
+
+    # TODO : EventCreate (ce que le client envoie : sans id, remaining, createdAt...)
+    # TODO : EventPatch, OrderCreate, Order, Ticket
